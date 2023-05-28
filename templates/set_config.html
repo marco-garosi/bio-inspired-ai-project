@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Image Approximator</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+<body>
+    <div class="w3-card-4">
+        <div class="w3-container w3-blue">
+            <h2>Settings</h2>
+        </div>
+
+        <form action="/run" method="post" enctype="multipart/form-data" class="w3-container">
+            <div class="w3-row-padding w3-section">
+                <div class="w3-col">
+                    <label class="w3-text-blue" for="algorithm">Algorithm:</label><br>
+                    <select class="w3-input" name="algorithm" id="algorithm" onchange="algorithmChange()">
+                        <option value="EaSimple">Simple Evolutionary Algorithm</option>
+                        <option value="EaMuCommaLambda">&mu;,&lambda; (Mu Comma Lambda)</option>
+                        <option value="EaMuPlusLambda" selected>&mu;+&lambda; (Mu+Lambda)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-half">
+                    <label class="w3-text-blue" for="generations">Generations</label>
+                    <input class="w3-input w3-border" type="number" name="generations" id="generations" placeholder="4000" value="4000">
+                </div>
+
+                <div class="w3-half">
+                    <label class="w3-text-blue" class="w3-text-blue" for="population_size">Population Size</label>
+                    <input class="w3-input w3-border" type="number" name="population_size" id="population_size" placeholder="25" value="25">
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-third">
+                    <label class="w3-text-blue" for="mutation_probability">Mutation Probability</label>
+                    <input class="w3-input w3-border" type="number" step="any" name="mutation_probability" id="mutation_probability" placeholder="0.7" value="0.7">
+                </div>
+
+                <div class="w3-third">
+                    <label class="w3-text-blue" for="crossover_probability">Crossover Probability</label>
+                    <input class="w3-input w3-border" type="number" step="any" name="crossover_probability" id="crossover_probability" placeholder="0.3" value="0.3">
+                </div>
+
+                <div class="w3-third">
+                    <label class="w3-text-blue" for="indpb">Independent Probability for each Attribute to be Mutated</label>
+                    <input class="w3-input w3-border" type="number" step="any" name="indpb" id="indpb" placeholder="0.5" value="0.3">
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-col">
+                    <label class="w3-text-blue" for="polygons">How many polygons to start with?</label>
+                    <input class="w3-input w3-border" type="number" name="polygons" id="polygons" placeholder="3" value="3">
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-half">
+                    <label class="w3-text-blue" for="tournament_selection">Tournament Selection</label>
+                    <select class="w3-input" name="tournament_selection" id="tournament_selection" onchange="tournamentChange()">
+                        <option value="SelTournament" selected>Selection Tournament</option>
+                        <option value="DoubleTournament">Double Tournament</option>
+                        <option value="SelRoulette">Roulette</option>
+                    </select>
+                </div>
+
+                <div class="w3-half tournament_size">
+                    <label class="w3-text-blue" for="tournament_size">Tournament Size</label>
+                    <input class="w3-input w3-border" type="number" name="tournament_size" id="tournament_size" placeholder="9" value="9">
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-third mu">
+                    <label class="w3-text-blue" for="mu">Mu &mu;</label>
+                    <input class="w3-input w3-border" type="number" name="mu" id="mu" placeholder="25" value="25">
+                </div>
+
+                <div class="w3-third lambda">
+                    <label class="w3-text-blue" for="lambda">Lambda &lambda;</label>
+                    <input class="w3-input w3-border" type="number" name="lambda" id="lambda" placeholder="50" value="50">
+                </div>
+
+                <div class="w3-third">
+                    <label class="w3-text-blue" for="sort_points">Sort Points?</label>
+                    <input class="w3-input w3-border" type="checkbox" name="sort_points" id="sort_points" checked>
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-col">
+                    <label class="w3-text-blue" for="seed">Seed</label>
+                    <input class="w3-input w3-border" type="number" name="seed" id="seed" placeholder="53" value="53">
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-third save_images">
+                    <label class="w3-text-blue" for="save_images">Save Images?</label>
+                    <input class="w3-input w3-border" type="checkbox" name="save_images" id="save_images" onchange="imagesChange()" checked>
+                </div>
+
+                <div class="w3-third every">
+                    <label class="w3-text-blue" for="every">Every how many generations?</label>
+                    <input class="w3-input w3-border" type="number" name="every" id="every" placeholder="50" value="50">
+                </div>
+
+                <div class="w3-third output_folder">
+                    <label class="w3-text-blue" for="output_folder">Output Folder</label>
+                    <input class="w3-input w3-border" type="text" webkitdirectory name="output_folder" id="output_folder" placeholder="/path/to/directory/" required>
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-col">
+                    <label class="w3-text-blue" for="input_image">Image</label>
+                    <input class="w3-input w3-border" type="file" name="input_image" id="input_image" required>
+                </div>
+            </div>
+
+            <div class="w3-row-padding w3-section">
+                <div class="w3-col">
+                    <input class="w3-input w3-border w3-button w3-round-xlarge w3-blue" type="submit" value="Submit">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function algorithmChange() {
+            if (document.querySelector('#algorithm').value == 'EaSimple') {
+                document.querySelector('.mu').style.display = 'none';
+                document.querySelector('.lambda').style.display = 'none';
+            } else {
+                document.querySelector('.mu').style.display = 'block';
+                document.querySelector('.lambda').style.display = 'block';
+            }
+        }
+
+        function tournamentChange() {
+            if (document.querySelector('#tournament_selection').value == 'SelTournament') {
+                document.querySelector('.tournament_size').style.display = 'block';
+                document.querySelector('#tournament_selection').parentElement.classList.add('w3-half')
+            } else {
+                document.querySelector('.tournament_size').style.display = 'none';
+                document.querySelector('#tournament_selection').parentElement.classList.remove('w3-half')
+            }
+        }
+
+        function imagesChange() {
+            if (document.querySelector('#save_images').checked) {
+                document.querySelector('#save_images').parentElement.classList.add('w3-third')
+                document.querySelector('#save_images').parentElement.classList.remove('w3-col')
+                document.querySelector('.every').style.display = 'block';
+                document.querySelector('.output_folder').style.display = 'block';
+                document.querySelector('#output_folder').setAttribute('required', '');
+            } else {
+                document.querySelector('#save_images').parentElement.classList.remove('w3-third')
+                document.querySelector('#save_images').parentElement.classList.add('w3-col')
+                document.querySelector('.every').style.display = 'none';
+                document.querySelector('.output_folder').style.display = 'none';
+                document.querySelector('#output_folder').removeAttribute('required')
+            }
+        }
+    </script>
+</body>
+</html>

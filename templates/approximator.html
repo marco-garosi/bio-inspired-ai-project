@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Image Approximator</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+
+<body>
+    <div class="w3-container">
+        <div id="progress" class="w3-section w3-light-grey w3-round-large">
+            <div id="bar" class="w3-blue w3-center w3-padding-16 w3-round-large" style="width: 0%">0%</div>
+        </div>
+        <p id="generations"><span id="completed">0</span> of <span id="total">0</span> generations</p>
+
+        <div class="w3-center">
+            <img id="result-image" class="w3-round">
+        </div>
+    </div>
+
+    <div class="w3-panel w3-pale-blue w3-leftbar w3-rightbar w3-border-blue">
+        <p>Algorithm: {{ algorithm }}</p>
+        <p>Generations: {{ generations }}</p>
+        <p>Population size: {{ population_size }}</p>
+        <p>Mutation probability: {{ mutation_probability }}</p>
+        <p>Crossover probability: {{ crossover_probability }}</p>
+        <p>Independent Probability for each Attribute to be Mutated: {{ indpb }}</p>
+        <p>Polygons: {{ polygons }}</p>
+        <p>Tournament selection: {{ tournament_selection }}</p>
+        <p>Tournament size: {{ tournament_size }}</p>
+        <p>Mu &mu;: {{ mu }}</p>
+        <p>Lambda &lambda;: {{ lambda_ }}</p>
+        <p>Sort points: {{ sort_points }}</p>
+        <p>Seed: {{ seed }}</p>
+        <p>Save evolving image: {{ save_evolving_image }}</p>
+        <p>Save every: {{ save_every }}</p>
+        <p>Output folder: {{ output_folder }}</p>
+    </div>
+
+    <script>
+        function httpGetAsync(url, callback) {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                    callback(xmlHttp.responseText);
+            }
+            xmlHttp.open("GET", url, true); // True for asynchronous execution
+            xmlHttp.send(null);
+        }
+
+        function checkProgress() {
+            httpGetAsync('/progress', (response) => {
+                const result = JSON.parse(response);
+                document.querySelector('#bar').style.width = (result.completed / result.total * 100).toFixed(2) + "%";
+                document.querySelector('#bar').innerHTML = (result.completed / result.total * 100).toFixed(2) + "%";
+
+                document.querySelector('#completed').innerHTML = result.completed;
+                document.querySelector('#total').innerHTML = result.total;
+
+                if ('image' in result) {
+                    document.querySelector('#result-image').setAttribute('src', '/image/' + result.image)
+                }
+
+                if (result.completed == result.total) {
+                    clearInterval(interval);
+                }
+            })
+        }
+
+        const interval = setInterval(() => {
+            checkProgress();
+        }, 1000)
+    </script>
+</body>
+</html>
