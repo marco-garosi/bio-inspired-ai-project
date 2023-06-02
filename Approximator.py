@@ -3,6 +3,9 @@ import random
 from deap import tools, algorithms, creator
 from ImageTools import ImageTools
 from ImageApproximator import ImageApproximator
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 
 class Approximator():
     """Image approximator abstracting the interface of the evolutionary algorithm
@@ -64,7 +67,7 @@ class Approximator():
         self.seed = seed
         self.result_images = []
 
-    def run(self, save_evolving_image=False, save_every=None, output_folder=None):
+    def run(self, save_evolving_image=False, save_final_plot=True, save_every=None, output_folder=None):
         """Run the evolutionary algorithm
 
         The evolutionary algorithm to be run is the one specified in the constructor.
@@ -127,14 +130,18 @@ class Approximator():
         hall_of_fame = tools.HallOfFame(3)
 
         stats = tools.Statistics(lambda x: x.fitness.values[0])
-        stats.register('min', np.min)
-        stats.register('max', np.max)
-        stats.register('average', np.mean)
-        stats.register('median', np.median)
-        stats.register('std', np.std)
+        stats_size = tools.Statistics(key=len)
+        mstats = tools.MultiStatistics(fitness=stats, size=stats_size)
+
+        mstats.register('min', np.min)
+        mstats.register('max', np.max)
+        mstats.register('average', np.mean)
+        mstats.register('median', np.median)
+        mstats.register('std', np.std)
+
 
         self.logbook = tools.Logbook()
-        self.logbook.header = ['gen'] + stats.fields
+        self.logbook.header = ['gen'] + mstats.fields
 
         # ----------------------
         # - Solution Evolution -
@@ -146,22 +153,22 @@ class Approximator():
                     population, self.toolbox,
                     mu=self.mu, lambda_=self.lambda_,
                     cxpb=self.crossover_probability, mutpb=self.mutation_probability, 
-                    ngen=1, stats=stats, halloffame=hall_of_fame, verbose=False)
+                    ngen=1, stats=mstats, halloffame=hall_of_fame, verbose=False)
             
             elif self.algorithm == 'EaMuCommaLambda':
                  population, log = algorithms.eaMuCommaLambda(
                     population, self.toolbox,
                     mu=self.mu, lambda_=self.lambda_,
                     cxpb=self.crossover_probability, mutpb=self.mutation_probability,
-                    ngen=1, stats=stats, halloffame=hall_of_fame, verbose=False)
+                    ngen=1, stats=mstats, halloffame=hall_of_fame, verbose=False)
                  
             elif self.algorithm == 'EaSimple':
                 population, log = algorithms.eaSimple(
                     population, self.toolbox, 
                     cxpb=self.crossover_probability, mutpb=self.mutation_probability,
-                    ngen=1, stats=stats, halloffame=hall_of_fame, verbose=False)
+                    ngen=1, stats=mstats, halloffame=hall_of_fame, verbose=False)
 
-            record = stats.compile(population)
+            record = mstats.compile(population)
             self.logbook.record(gen=generation + 1, **record)
             print(self.logbook.stream)
 
@@ -174,6 +181,80 @@ class Approximator():
         # -- End of evolution --
         # ----------------------
 
+        if save_evolving_image:
+            image = self.image_tools.draw_solution(population[0])
+            image.save(f'{output_folder}solution_generation_{generation}.png')
+            self.result_images.append(f'solution_generation_{generation}.png')
+
         image = self.image_tools.draw_solution(population[0])
         image.save(f'{output_folder}solution_generation_{self.generations}.png')
         self.result_images.append(f'solution_generation_{self.generations}.png')
+
+        if save_final_plot:
+            self.save_stats(output_folder)
+
+    def save_stats(self, output_folder):
+        """Generate summary plots and save them on the file system.
+        """
+
+        gen = self.logbook.select('gen')
+
+        # Fitness information
+        fit_mins = self.logbook.chapters['fitness'].select('min')
+        fit_maxs = self.logbook.chapters['fitness'].select('max')
+        fit_avgs = self.logbook.chapters['fitness'].select('average')
+
+        # Individuals' size information
+        size_mins = self.logbook.chapters['size'].select('min')
+        size_maxs = self.logbook.chapters['size'].select('max')
+        size_avgs = self.logbook.chapters['size'].select('average')
+
+        # -- Fitness vs Size plot --
+        fig, ax1 = plt.subplots()
+        line1 = ax1.plot(gen, fit_avgs, "b-", label="Average Fitness")
+        ax1.set_xlabel("Generation")
+        ax1.set_ylabel("Fitness", color="b")
+        for tl in ax1.get_yticklabels():
+            tl.set_color("b")
+
+        ax2 = ax1.twinx()
+        line2 = ax2.plot(gen, size_avgs, "r-", label="Average Size")
+        ax2.set_ylabel("Size", color="r")
+        for tl in ax2.get_yticklabels():
+            tl.set_color("r")
+
+        lns = line1 + line2
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc="center right")
+
+        plt.savefig(f'{output_folder}fitness_vs_size.png')
+
+
+        # -- Overall fitness plot --
+        fig, ax1 = plt.subplots()
+        line1 = ax1.plot(gen, fit_mins, "r-", label="Minimum Fitness")
+        line2 = ax1.plot(gen, fit_avgs, "b-", label="Average Fitness")
+        line3 = ax1.plot(gen, fit_maxs, "g-", label="Maximum Fitness")
+        ax1.set_xlabel("Generation")
+        ax1.set_ylabel("Fitness")
+
+        lns = line1 + line2 + line3
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc="center right")
+
+        plt.savefig(f'{output_folder}fitness_overall.png')
+
+
+        # -- Overall size plot --
+        fig, ax1 = plt.subplots()
+        line1 = ax1.plot(gen, size_mins, "r-", label="Minimum Size")
+        line2 = ax1.plot(gen, size_avgs, "b-", label="Average Size")
+        line3 = ax1.plot(gen, size_maxs, "g-", label="Maximum Size")
+        ax1.set_xlabel("Generation")
+        ax1.set_ylabel("Size (#polygons)")
+
+        lns = line1 + line2 + line3
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc="center right")
+
+        plt.savefig(f'{output_folder}size_overall.png')
