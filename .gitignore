@@ -153,6 +153,5 @@ cython_debug/
 
 Unnecessary/
 output_images/
-input_images/
 
 .DS_Store
